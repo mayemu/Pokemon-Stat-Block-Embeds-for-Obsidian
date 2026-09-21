@@ -1,0 +1,220 @@
+/* Poképaste Viewer — compact team cards
+   Themed entirely from Obsidian variables; type colors come from inline --t vars. */
+
+.pkp-team,
+.pkp-team * { box-sizing: border-box; }
+
+.pkp-team {
+  container-type: inline-size;
+  margin: 0.5em 0;
+  font-family: var(--font-interface);
+  font-size: 13px;
+  line-height: 1.25;
+  color: var(--text-normal);
+  text-align: left;
+}
+
+.pkp-team.pkp-loading { color: var(--text-faint); font-size: 12px; padding: 8px 2px; }
+
+.pkp-team.pkp-error {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--color-red-rgb, 224, 80, 80), 0.5);
+  background: rgba(var(--color-red-rgb, 224, 80, 80), 0.08);
+}
+.pkp-err-title { font-weight: 600; margin-bottom: 2px; }
+.pkp-err-body { color: var(--text-muted); font-size: 12px; }
+
+/* ── team bar ── */
+.pkp-bar { display: flex; align-items: center; gap: 8px; margin: 0 2px 6px; min-height: 22px; }
+.pkp-bar-title {
+  font-weight: 650; font-size: 13px; min-width: 0; flex: 0 1 auto;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pkp-bar-sub { color: var(--text-faint); font-size: 12px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pkp-copy {
+  flex: none; height: 22px; padding: 0 8px; margin-left: auto;
+  font-size: 11px; font-weight: 500; line-height: 1;
+  color: var(--text-muted); background: transparent; box-shadow: none;
+  border: 1px solid var(--background-modifier-border); border-radius: 6px; cursor: pointer;
+}
+.pkp-copy:hover { color: var(--text-normal); border-color: var(--background-modifier-border-hover); background: var(--background-modifier-hover); }
+
+/* ── grid ── */
+.pkp-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+}
+.pkp-grid.pkp-solo { grid-template-columns: minmax(0, 440px); }
+body.pkp-cols-1 .pkp-grid,
+body.pkp-cols-1 .pkp-grid.pkp-solo { grid-template-columns: minmax(0, 1fr); }
+body.pkp-cols-2 .pkp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.pkp-cols-3 .pkp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@container (max-width: 560px) {
+  body.pkp-cols-2 .pkp-grid,
+  body.pkp-cols-3 .pkp-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── card ── */
+.pkp-mon {
+  --pkp-nc: var(--text-normal);
+  position: relative;
+  display: flex; flex-direction: column; gap: 7px;
+  min-width: 0;
+  padding: 9px 10px 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  overflow: hidden;
+}
+/* the "type spine": top half = type 1, bottom half = type 2 */
+.pkp-mon::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: linear-gradient(
+    to bottom,
+    var(--pkp-t1, var(--background-modifier-border)) 0 50%,
+    var(--pkp-t2, var(--pkp-t1, var(--background-modifier-border))) 50% 100%
+  );
+}
+
+/* ── header ── */
+.pkp-head { display: grid; grid-template-columns: 68px minmax(0, 1fr); gap: 9px; align-items: center; }
+
+.pkp-sprite {
+  width: 68px; height: 68px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 9px; overflow: hidden;
+  background: radial-gradient(
+    closest-side,
+    rgba(var(--pkp-t1-rgb, 128, 128, 128), 0.30),
+    rgba(var(--pkp-t1-rgb, 128, 128, 128), 0.08) 72%,
+    transparent 100%
+  );
+}
+.pkp-sprite.pkp-noimg { font-size: 26px; font-weight: 700; color: var(--text-faint); }
+.pkp-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+.pkp-id { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.pkp-l1 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; min-width: 0; }
+.pkp-nm { display: flex; align-items: baseline; gap: 5px; min-width: 0; max-width: 100%; }
+.pkp-name {
+  flex: 0 1 auto; min-width: 0;
+  font-size: 15px; font-weight: 700; letter-spacing: -0.005em;
+  color: var(--pkp-nc);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pkp-g { flex: none; font-size: 13px; font-weight: 700; }
+.pkp-g-m { color: #4d8dff; }
+.pkp-g-f { color: #ff6fa5; }
+.pkp-shiny { flex: none; color: #f2b01e; font-size: 13px; }
+.pkp-badge {
+  flex: none; font-size: 9.5px; font-weight: 700; padding: 2px 5px; border-radius: 4px;
+  color: var(--text-muted); border: 1px solid var(--background-modifier-border);
+}
+.pkp-nick {
+  flex: 0 1 auto; min-width: 0; max-width: 100%; font-size: 11.5px; font-style: italic; color: var(--text-faint);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.pkp-l2 { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 4px; }
+body.pkp-hide-types .pkp-ty { display: none; }
+.pkp-l2:empty { display: none; }
+
+.pkp-ty {
+  font-size: 10px; font-weight: 700; line-height: 1; letter-spacing: 0.01em;
+  padding: 3px 6px; border-radius: 4px;
+  background: var(--t, var(--background-modifier-border)); color: var(--t-fg, var(--text-normal));
+}
+
+.pkp-tera {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 700; line-height: 1;
+  padding: 3px 6px 3px 4px; border-radius: 4px;
+  color: var(--text-normal);
+  background: rgba(var(--t-rgb, 128, 128, 128), 0.22);
+  box-shadow: inset 0 0 0 1px rgba(var(--t-rgb, 128, 128, 128), 0.8);
+}
+.pkp-tera svg { width: 9px; height: 9px; fill: var(--t, currentColor); }
+.pkp-tera.pkp-stellar {
+  background: linear-gradient(90deg, rgba(255,122,122,.28), rgba(255,211,90,.28), rgba(122,255,178,.28), rgba(122,184,255,.28), rgba(196,122,255,.28));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+}
+.pkp-tera.pkp-stellar svg { fill: #ffd35a; }
+
+.pkp-item { display: flex; align-items: center; gap: 4px; min-width: 0; font-size: 12.5px; font-weight: 500; }
+.pkp-item-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pkp-ic {
+  flex: none; display: inline-block; width: 24px; height: 24px; margin: -4px -1px -4px -3px;
+  background-repeat: no-repeat; image-rendering: pixelated;
+}
+.pkp-ic-img { object-fit: contain; }
+body.pkp-hide-itemicons .pkp-ic { display: none; }
+
+.pkp-ab { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── nature + spreads ── */
+.pkp-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 3px; }
+.pkp-chip {
+  display: inline-flex; align-items: baseline; gap: 3px;
+  padding: 4px 5px; border-radius: 5px;
+  font-size: 10.5px; line-height: 1; white-space: nowrap;
+  color: var(--text-muted);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  font-variant-numeric: tabular-nums;
+}
+.pkp-chip b { color: var(--text-normal); font-weight: 650; }
+.pkp-lvl { color: var(--text-faint); }
+.pkp-chip i { font-style: normal; font-size: 9.5px; font-weight: 600; }
+.pkp-chip i.up, .pkp-ev.up span { color: var(--color-green, #3fa66b); }
+.pkp-chip i.dn, .pkp-ev.dn span { color: var(--color-red, #e05a5a); }
+.pkp-nat { gap: 4px; }
+.pkp-iv { opacity: 0.8; }
+
+/* ── moves ── */
+.pkp-moves {
+  list-style: none; margin: auto 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px;
+}
+.pkp-mv {
+  display: flex; align-items: center; min-width: 0; height: 26px; margin: 0;
+  padding: 0 8px 0 10px;
+  font-size: 12.5px; font-weight: 500; line-height: 1;
+  border-radius: 6px;
+  background: rgba(var(--t-rgb, 128, 128, 128), 0.20);
+  box-shadow: inset 3px 0 0 var(--t, var(--text-faint));
+}
+.pkp-mv::marker { content: none; }
+.pkp-mv span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Pokémon color → name color (matches Showdown/Poképaste "color" field) ── */
+.pkp-mon[data-c="red"]    { --pkp-nc: #c62f3b; }
+.pkp-mon[data-c="blue"]   { --pkp-nc: #2f63d6; }
+.pkp-mon[data-c="yellow"] { --pkp-nc: #a67a00; }
+.pkp-mon[data-c="green"]  { --pkp-nc: #2c8a3a; }
+.pkp-mon[data-c="black"]  { --pkp-nc: #1b1c23; }
+.pkp-mon[data-c="brown"]  { --pkp-nc: #87562a; }
+.pkp-mon[data-c="purple"] { --pkp-nc: #7b3fb8; }
+.pkp-mon[data-c="gray"]   { --pkp-nc: #596071; }
+.pkp-mon[data-c="white"]  { --pkp-nc: #8b92a5; }
+.pkp-mon[data-c="pink"]   { --pkp-nc: #cf3a80; }
+
+.theme-dark .pkp-mon[data-c="red"]    { --pkp-nc: #ff7d86; }
+.theme-dark .pkp-mon[data-c="blue"]   { --pkp-nc: #82abff; }
+.theme-dark .pkp-mon[data-c="yellow"] { --pkp-nc: #ffd54a; }
+.theme-dark .pkp-mon[data-c="green"]  { --pkp-nc: #72da82; }
+.theme-dark .pkp-mon[data-c="black"]  { --pkp-nc: #b3b7cc; }
+.theme-dark .pkp-mon[data-c="brown"]  { --pkp-nc: #dba56d; }
+.theme-dark .pkp-mon[data-c="purple"] { --pkp-nc: #c79dff; }
+.theme-dark .pkp-mon[data-c="gray"]   { --pkp-nc: #b0b7c8; }
+.theme-dark .pkp-mon[data-c="white"]  { --pkp-nc: #f6f7fc; }
+.theme-dark .pkp-mon[data-c="pink"]   { --pkp-nc: #ff90c2; }
+
+/* very narrow panes (small phones, split view) */
+@container (max-width: 300px) {
+  .pkp-head { grid-template-columns: 58px minmax(0, 1fr); gap: 7px; }
+  .pkp-sprite { width: 58px; height: 58px; }
+  .pkp-mv { font-size: 12px; padding: 0 6px 0 9px; }
+}
