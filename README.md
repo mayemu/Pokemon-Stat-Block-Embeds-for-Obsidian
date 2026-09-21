@@ -15,7 +15,6 @@ Salamence-Mega (M) @ Salamencite
 Ability: Aerilate
 Level: 50
 Shiny: Yes
-Tera Type: Flying
 EVs: 1 HP / 32 Atk / 1 SpD / 32 Spe
 Adamant Nature
 - Dragon Dance
