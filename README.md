@@ -11,7 +11,9 @@ Turns Pokémon Showdown exports and pokepast.es links into visually pleasing com
 - ...and more!
 
 ## Preview
-<img src="[path/to/image.png](https://github.com/user-attachments/assets/7a665daa-6fae-4d9e-bfe1-16f87ebb4bb6)" width="400">
+<a href="[https://your-destination-link.com](https://github.com/user-attachments/assets/7a665daa-6fae-4d9e-bfe1-16f87ebb4bb6)">
+  <img src="path/to/image.png" width="45%" alt="Description of image">
+</a>
 
 
 ## Install
