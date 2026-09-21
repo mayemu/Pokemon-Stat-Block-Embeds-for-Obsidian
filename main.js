@@ -13,12 +13,13 @@ const { Plugin, PluginSettingTab, Setting, Notice, requestUrl } = require('obsid
 const SPRITES = 'https://play.pokemonshowdown.com/sprites/';
 const DATA_URL = 'https://play.pokemonshowdown.com/data/';
 const ITEM_FALLBACK = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/';
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2; // v2 adds base stats to the dex cache
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 const FENCES = ['pokepaste', 'showdown', 'pokemon', 'pkmn', 'pokepast'];
 
 const DEFAULTS = {
   spriteStyle: 'animated', // animated | pixel | hd
+  evMode: 'auto',          // auto | evs | sp (Champions stat points)
   columns: 'auto',         // auto | 1 | 2 | 3
   showTypes: true,
   showItemIcons: true,
@@ -232,6 +233,54 @@ function spriteChain(id, { shiny, female, style }) {
   return urls;
 }
 
+
+/* ───────────────────────────── stat calculation ───────────────────────────── */
+
+/**
+ * Champions "stat points" (max 32 each, 66 total, +1 stat each at Lv50) also use the
+ * "EVs:" line in Showdown exports. Auto-detect them so the maths comes out right.
+ */
+function detectStatPoints(evs, level, mode) {
+  if (mode === 'sp') return true;
+  if (mode === 'evs') return false;
+  const vals = STAT_ORDER.map((k) => evs[k] || 0);
+  const total = vals.reduce((a, b) => a + b, 0);
+  if (!total || total > 66 || Math.max(...vals) > 32) return false;
+  return level === 50 || vals.some((v) => v % 4 !== 0);
+}
+
+/**
+ * Real, final stats — same formulas as the games / Showdown.
+ * Each row also carries `noEv` (stat with 0 EVs/SP) so the bar can show the boost as an extension.
+ */
+function calcStats(mon, base, evMode) {
+  if (!base) return null;
+  const L = mon.level || 100;
+  const [up, down] = NATURES[toID(mon.nature)] || [];
+  const sp = detectStatPoints(mon.evs, mon.level, evMode);
+  const rows = STAT_ORDER.map((k, i) => {
+    const B = base[i];
+    const iv = mon.ivs[k] === undefined ? 31 : mon.ivs[k];
+    const ev = mon.evs[k] || 0;
+    const mult = k === up ? 11 : k === down ? 9 : 10; // integer maths: avoids 1.1 float error
+    let noEv;
+    let final;
+    if (k === 'hp') {
+      if (B === 1) return { k, B, iv, ev, mult: 10, noEv: 1, final: 1, gain: 0 }; // Shedinja
+      noEv = Math.floor(((2 * B + iv) * L) / 100) + L + 10;
+      final = sp ? noEv + ev : Math.floor(((2 * B + iv + Math.floor(ev / 4)) * L) / 100) + L + 10;
+    } else {
+      const core = Math.floor(((2 * B + iv) * L) / 100) + 5;
+      noEv = Math.floor((core * mult) / 10);
+      final = sp
+        ? Math.floor(((core + ev) * mult) / 10)
+        : Math.floor(((Math.floor(((2 * B + iv + Math.floor(ev / 4)) * L) / 100) + 5) * mult) / 10);
+    }
+    return { k, B, iv, ev, mult, noEv, final, gain: Math.max(0, final - noEv) };
+  });
+  return { rows, sp };
+}
+
 /* ───────────────────────────── plugin ───────────────────────────── */
 
 class PokepastePlugin extends Plugin {
@@ -361,7 +410,8 @@ class PokepastePlugin extends Plugin {
         const out = {};
         for (const k in raw) {
           const v = raw[k];
-          if (v && v.name) out[k] = [v.name, (v.types || []).join('/'), v.color || '', v.baseSpecies || '', v.forme || ''];
+          if (v && v.name) out[k] = [v.name, (v.types || []).join('/'), v.color || '', v.baseSpecies || '', v.forme || '',
+            v.baseStats ? STAT_ORDER.map((k) => v.baseStats[k] || 0) : null];
         }
         next.dex = out; ok++;
       } catch (e) { console.warn('[pokepaste] pokedex parse failed', e); }
@@ -419,6 +469,7 @@ class PokepastePlugin extends Plugin {
       name: entry && !rest ? entry[0] : name,
       types: entry ? entry[1].split('/').filter(Boolean) : [],
       color: entry ? entry[2].toLowerCase() : '',
+      base: entry && entry[5] ? entry[5] : null,
       spriteId,
     };
   }
@@ -515,8 +566,16 @@ class PokepastePlugin extends Plugin {
       }
     }
 
+    // One shared bar scale per block, so bars are directly comparable between Pokémon.
+    let scale = 150;
+    for (const m of team.mons) {
+      m.sp = this.lookupSpecies(m.species);
+      m.stats = calcStats(m, m.sp.base, this.settings.evMode);
+      if (m.stats) for (const r of m.stats.rows) scale = Math.max(scale, r.final);
+    }
+
     const grid = h('div', 'pkp-grid' + (team.mons.length === 1 ? ' pkp-solo' : ''), null, host);
-    for (const mon of team.mons) this.renderMon(grid, mon);
+    for (const mon of team.mons) this.renderMon(grid, mon, scale);
   }
 
   mountSprite(box, sp, mon) {
@@ -556,9 +615,64 @@ class PokepastePlugin extends Plugin {
     return img;
   }
 
-  renderMon(grid, mon) {
-    const sp = this.lookupSpecies(mon.species);
-    const card = h('article', 'pkp-mon', null, grid);
+  renderStats(parent, mon, scale) {
+    const { rows, sp } = mon.stats;
+    const unit = sp ? 'SP' : 'EVs';
+    const box = h('div', 'pkp-stats', null, parent);
+    box.title = `Bars share one scale across this team (full width = ${scale}). ` +
+      `Solid = stat from base, level, IVs and nature; bright extension = ${sp ? 'stat points' : 'EVs'}.`;
+    const pct = (v) => `${Math.min(100, (v / scale) * 100).toFixed(2)}%`;
+
+    for (const r of rows) {
+      const cell = h('div', 'pkp-st', null, box);
+      const cls = r.mult > 10 ? ' up' : r.mult < 10 ? ' dn' : '';
+      const lbl = h('span', 'pkp-sl', STAT_LABEL[r.k], cell);
+      if (r.mult > 10) h('span', 'pkp-sg up', '+', lbl);
+      if (r.mult < 10) h('span', 'pkp-sg dn', '−', lbl);
+
+      const track = h('span', 'pkp-track', null, cell);
+      h('span', 'pkp-b0', null, track).style.width = pct(r.noEv);
+      if (r.gain) h('span', 'pkp-b1', null, track).style.width = pct(r.gain);
+
+      h('span', 'pkp-sv' + cls, String(r.final), cell);
+
+      const nat = r.mult > 10 ? ', +10% nature' : r.mult < 10 ? ', −10% nature' : '';
+      cell.title = `${STAT_LABEL[r.k]}: base ${r.B}, ${r.iv} IV, ${r.ev} ${unit}${nat} → ${r.final}`;
+    }
+  }
+
+  renderSpread(parent, mon) {
+    const { sp } = mon.stats;
+    const [up, down] = NATURES[toID(mon.nature)] || [];
+    const evVals = STAT_ORDER.filter((k) => mon.evs[k]);
+    const ivVals = STAT_ORDER.filter((k) => mon.ivs[k] !== undefined && mon.ivs[k] !== 31);
+    if (!evVals.length && !ivVals.length) return;
+
+    const wrap = h('div', 'pkp-spread', null, parent);
+    if (evVals.length) {
+      const row = h('div', 'pkp-spread-row', null, wrap);
+      evVals.forEach((k, i) => {
+        if (i) h('span', 'pkp-spread-sep', '/', row);
+        const item = h('span', 'pkp-spread-item', null, row);
+        h('span', 'pkp-cv' + (k === up ? ' up' : k === down ? ' dn' : ''), String(mon.evs[k]), item);
+        h('span', 'pkp-spread-st', STAT_LABEL[k], item);
+      });
+    }
+    if (ivVals.length) {
+      const row = h('div', 'pkp-spread-row pkp-spread-iv', null, wrap);
+      h('span', 'pkp-spread-tag', 'IV', row);
+      ivVals.forEach((k, i) => {
+        if (i) h('span', 'pkp-spread-sep', '/', row);
+        const item = h('span', 'pkp-spread-item', null, row);
+        h('span', 'pkp-cv', String(mon.ivs[k]), item);
+        h('span', 'pkp-spread-st', STAT_LABEL[k], item);
+      });
+    }
+  }
+
+  renderMon(grid, mon, scale) {
+    const sp = mon.sp || this.lookupSpecies(mon.species);
+    const card = h('div', 'pkp-mon', null, grid);
     if (sp.color) card.dataset.c = sp.color;
 
     // Type "spine" on the left edge + tinted sprite backdrop.
@@ -571,8 +685,10 @@ class PokepastePlugin extends Plugin {
       card.style.setProperty(`--pkp-t${i}-rgb`, hexToRgb(hex).join(','));
     }
 
+    const body = h('div', 'pkp-body', null, card);
+
     /* header: sprite + identity */
-    const head = h('div', 'pkp-head', null, card);
+    const head = h('div', 'pkp-head', null, body);
     const spriteBox = h('div', 'pkp-sprite', null, head);
     this.mountSprite(spriteBox, sp, mon);
 
@@ -615,57 +731,57 @@ class PokepastePlugin extends Plugin {
       h('span', 'pkp-item-name', it.name, row);
       row.title = it.desc ? `${it.name} — ${it.desc}` : it.name;
     }
-    if (mon.ability) h('div', 'pkp-ab', mon.ability, id).title = 'Ability';
 
-    /* nature + spreads */
+    // ability + level + nature share one line
     const [up, down] = NATURES[toID(mon.nature)] || [];
-    const chips = [];
-    if (mon.level && mon.level !== 100) {
-      const c = h('span', 'pkp-chip pkp-lvl');
-      h('span', null, 'Lv', c);
-      h('b', null, String(mon.level), c);
-      chips.push(c);
-    }
-    if (mon.nature) {
-      const c = h('span', 'pkp-chip pkp-nat');
-      h('b', null, cap(mon.nature), c);
-      if (up) {
-        h('i', 'up', `+${STAT_LABEL[up]}`, c);
-        h('i', 'dn', `−${STAT_LABEL[down]}`, c);
+    const showLv = mon.level && mon.level !== 100;
+    if (mon.ability || showLv || mon.nature) {
+      const l4 = h('div', 'pkp-l4', null, id);
+      if (mon.ability) h('span', 'pkp-ab', mon.ability, l4).title = 'Ability';
+      if (showLv) h('span', 'pkp-tag', `Lv${mon.level}`, l4).title = `Level ${mon.level}`;
+      if (mon.nature) {
+        const tag = h('span', 'pkp-tag', cap(mon.nature), l4);
+        tag.title = up ? `${cap(mon.nature)}: +${STAT_LABEL[up]}, −${STAT_LABEL[down]}` : `${cap(mon.nature)} (neutral)`;
       }
-      chips.push(c);
-    }
-    for (const k of STAT_ORDER) {
-      if (!mon.evs[k]) continue;
-      const c = h('span', 'pkp-chip pkp-ev' + (k === up ? ' up' : k === down ? ' dn' : ''));
-      h('b', null, String(mon.evs[k]), c);
-      h('span', null, STAT_LABEL[k], c);
-      c.title = `${mon.evs[k]} ${STAT_LABEL[k]} EVs`;
-      chips.push(c);
-    }
-    for (const k of STAT_ORDER) {
-      if (mon.ivs[k] === undefined || mon.ivs[k] === 31) continue;
-      const c = h('span', 'pkp-chip pkp-iv');
-      h('b', null, String(mon.ivs[k]), c);
-      h('span', null, `${STAT_LABEL[k]} IV`, c);
-      chips.push(c);
-    }
-    if (chips.length) {
-      const meta = h('div', 'pkp-meta', null, card);
-      chips.forEach((c) => meta.appendChild(c));
     }
 
-    /* moves */
+    /* stats — real bars when base stats are known, plain chips otherwise */
+    if (mon.stats) {
+      this.renderStats(body, mon, scale);
+      this.renderSpread(body, mon);
+    } else {
+      const chips = [];
+      for (const k of STAT_ORDER) {
+        if (!mon.evs[k]) continue;
+        const c = h('span', 'pkp-chip pkp-ev' + (k === up ? ' up' : k === down ? ' dn' : ''));
+        h('span', 'pkp-cv', String(mon.evs[k]), c);
+        h('span', null, STAT_LABEL[k], c);
+        chips.push(c);
+      }
+      for (const k of STAT_ORDER) {
+        if (mon.ivs[k] === undefined || mon.ivs[k] === 31) continue;
+        const c = h('span', 'pkp-chip pkp-iv');
+        h('span', 'pkp-cv', String(mon.ivs[k]), c);
+        h('span', null, `${STAT_LABEL[k]} IV`, c);
+        chips.push(c);
+      }
+      if (chips.length) {
+        const meta = h('div', 'pkp-meta', null, body);
+        chips.forEach((c) => meta.appendChild(c));
+      }
+    }
+
+    /* moves — full-bleed strip along the bottom edge of the card */
     if (mon.moves.length) {
-      const ul = h('ul', 'pkp-moves', null, card);
-      for (const raw of mon.moves) {
+      const ul = h('div', 'pkp-moves', null, card);
+      mon.moves.forEach((raw, i) => {
         const mv = this.lookupMove(raw);
-        const li = h('li', 'pkp-mv', null, ul);
+        const li = h('div', 'pkp-mv' + (i === mon.moves.length - 1 && mon.moves.length % 2 ? ' pkp-mv-wide' : ''), null, ul);
         applyType(li, mv.type);
         h('span', null, raw.includes('/') ? raw : mv.name, li);
         const bits = [mv.type, mv.cat, mv.bp ? `${mv.bp} BP` : '', mv.acc ? `${mv.acc}% acc` : ''].filter(Boolean);
         li.title = bits.length ? `${mv.name} — ${bits.join(' · ')}${mv.desc ? '\n' + mv.desc : ''}` : mv.name;
-      }
+      });
     }
   }
 }
@@ -707,6 +823,15 @@ class PokepasteSettingTab extends PluginSettingTab {
         d.addOptions({ animated: 'Animated', pixel: 'Pixel (static)', hd: 'HD renders' })
           .setValue(p.settings.spriteStyle)
           .onChange(async (v) => { p.settings.spriteStyle = v; await p.savePlugin(); })
+      );
+
+    new Setting(containerEl)
+      .setName('Spread format')
+      .setDesc('How the numbers on the “EVs:” line are read. Auto treats small spreads (max 32 per stat, 66 total) as Pokémon Champions stat points. Reopen a note to apply.')
+      .addDropdown((d) =>
+        d.addOptions({ auto: 'Auto-detect', evs: 'Standard EVs', sp: 'Champions stat points' })
+          .setValue(p.settings.evMode)
+          .onChange(async (v) => { p.settings.evMode = v; await p.savePlugin(); })
       );
 
     new Setting(containerEl)
@@ -761,4 +886,4 @@ class PokepasteSettingTab extends PluginSettingTab {
 }
 
 module.exports = PokepastePlugin;
-module.exports.__test = { parseTeam, parseItems, heuristicSpriteId, entrySpriteId, spriteChain, toID, looksLikeShowdown };
+module.exports.__test = { parseTeam, parseItems, heuristicSpriteId, entrySpriteId, spriteChain, toID, looksLikeShowdown, calcStats, detectStatPoints };
