@@ -12,9 +12,8 @@ Turns Pokémon Showdown exports and pokepast.es links into visually pleasing com
 
 ## Preview
 <a href="[https://your-destination-link.com](https://github.com/user-attachments/assets/7a665daa-6fae-4d9e-bfe1-16f87ebb4bb6)">
-  <img src="path/to/image.png" width="45%" alt="Description of image">
+  <img src="path/to/image.png" width="45%">
 </a>
-
 
 ## Install
 Copy this folder to `<vault>/.obsidian/plugins/obsidian-pokemon-statblock-embeds/` (the folder name must match the `id` in `manifest.json`, and it must contain `main.js`, `manifest.json`, `styles.css`), then enable **Pokemon Stat Block Embeds** in *Settings → Community plugins*.
