@@ -1,6 +1,6 @@
 # Pokémon Stat Block Embeds for Obsidian
 
-Turns Pokémon Showdown exports and pokepast.es links into visually pleasing compact cards inside your Obsidian notes. 
+Turns Pokémon Showdown exports and pokepast.es links into compact visually pleasing cards inside your Obsidian notes. 
 
 ## Features
 - Visually optimized for both mobile and desktop clients
