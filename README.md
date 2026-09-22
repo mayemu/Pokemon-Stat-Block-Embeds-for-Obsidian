@@ -11,7 +11,7 @@ Turns Pokémon Showdown exports and pokepast.es links into visually pleasing com
 - ...and more!
 
 ## Preview
-<img width="466" height="603" alt="Screenshot 2026-09-21 at 3 43" src="https://github.com/user-attachments/assets/ce0ecf37-d00c-40ed-91ce-8336846cabeb" />
+<img width="373" height="482" alt="Screenshot 2026-09-21 at 3 432" src="https://github.com/user-attachments/assets/e9c69ea2-c632-4f37-8b91-38e517c0c1ae" />
 
 
 ## Install
