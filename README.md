@@ -18,21 +18,20 @@ Turns Pokémon Showdown exports and pokepast.es links into visually pleasing com
 Copy this folder to `<vault>/.obsidian/plugins/obsidian-pokemon-statblock-embeds/` (the folder name must match the `id` in `manifest.json`, and it must contain `main.js`, `manifest.json`, `styles.css`), then enable **Pokemon Stat Block Embeds** in *Settings → Community plugins*.
 
 ## Use
-Just paste a Showdown export or a `https://pokepast.es/...` link into a note — it is wrapped in a code block automatically.
+Paste a Showdown export or a `https://pokepast.es/...` link into a note, it will wrap into a code block automatically.
 Or write it yourself:
 
 ````
 ```pokepaste
-Salamence-Mega (M) @ Salamencite
-Ability: Aerilate
-Level: 50
-Shiny: Yes
-EVs: 1 HP / 32 Atk / 1 SpD / 32 Spe
-Adamant Nature
-- Dragon Dance
-- Double-Edge
-- Earthquake
-- Roost
+Lurantis @ Heavy-Duty Boots
+Ability: Contrary
+EVs: 248 HP / 8 Def / 252 SpD
+Tera Type: Poison
+Sassy Nature
+- Defog
+- Synthesis
+- Leaf Storm
+- Superpower
 ```
 ````
 
