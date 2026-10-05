@@ -1,37 +1,55 @@
-# Pokémon Stat Block Embeds for Obsidian
+# Pokemon Stat Block Embeds
 
-Turns Pokémon Showdown exports and pokepast.es links into compact team cards inside Obsidian (desktop + mobile).
+Render Pokémon Showdown sets, Pokepaste links, and team stat blocks as clean inline cards in Obsidian.
 
-## Install
-Copy this folder to `<vault>/.obsidian/plugins/obsidian-pokemon-statblock-embeds/` (the folder name must match the `id` in `manifest.json`, and it must contain `main.js`, `manifest.json`, `styles.css`), then enable **Pokemon Stat Block Embeds** in *Settings → Community plugins*.
+<!-- Replace with your own screenshot -->
+![Screenshot](https://vgy.me/delete/4671c606-6e27-4e1e-985e-8c9a8c7245e4)
 
-## Use
-Just paste a Showdown export or a `https://pokepast.es/...` link into a note — it is wrapped in a code block automatically.
-Or write it yourself:
+## Features
+
+- Animated, pixel, or HD sprites, including shiny, female, and Mega forms
+- Real final stats calculated from level, nature, IVs, and EVs
+- **Pokémon Champions support**: stat point spreads are auto-detected
+- Type-colored cards with tera types, item icons, and move details on hover
+- Copy button for teams, plus 1 to 3 column layouts
+
+## Usage
+
+Put a Showdown export or a Pokepaste link in a `pokepaste` code block:
 
 ````
 ```pokepaste
-Salamence-Mega (M) @ Salamencite
-Ability: Aerilate
-Level: 50
-Shiny: Yes
-EVs: 1 HP / 32 Atk / 1 SpD / 32 Spe
-Adamant Nature
-- Dragon Dance
-- Double-Edge
-- Earthquake
-- Roost
+Lurantis @ Leftovers
+Ability: Contrary
+EVs: 252 HP / 40 Def / 216 Spe
+Bold Nature
+- Defog
+- Leaf Storm
+- Superpower
+- Synthesis
 ```
 ````
 
-Fence names: `pokepaste`, `showdown`, `pokemon`, `pkmn`. Multiple Pokémon, nicknames, `=== [format] Team name ===` headers and pokepast.es URLs all work.
+````
+```pokepaste
+https://pokepast.es/xxxxxxxxxxxxxxxx
+```
+````
 
-## Stats
-Every card shows the six final stats as bars, calculated from the species' base stats, level, IVs, nature and EVs.
+Pasting a team or Pokepaste link into a note wraps it for you automatically.
 
-- Solid bar: the stat before any EVs. Bright extension: what the EVs (or stat points) add. The number is the final stat.
-- `+` / `−` next to a label (and a green / red number) marks the nature's boosted / lowered stat.
-- All bars in one block share a single scale, so lengths compare directly between stats and between Pokémon. Tap or hover a stat for its exact breakdown.
-- Pokémon Champions spreads (max 32 per stat, 66 total, +1 stat per point) are detected automatically. Override under *Settings → Spread format*.
+## Installation
 
-Types, name colors, move types and item icons come from Pokémon Showdown's data (downloaded once, cached, refreshed weekly). Sprites load from play.pokemonshowdown.com, so the first view needs a connection.
+**Community plugins:** [Install from the Obsidian community page](https://community.obsidian.md/plugins/pokemon-statblock-embeds)
+
+**BRAT:** add this repository in [BRAT](https://github.com/TfTHacker/obsidian42-brat).
+
+**Manual:** copy `main.js`, `manifest.json`, and `styles.css` into `<vault>/.obsidian/plugins/pokemon-statblock-embeds/` and enable the plugin.
+
+## Credits
+
+Data and sprites from [Pokémon Showdown](https://pokemonshowdown.com) and [Pokepaste](https://pokepast.es). Pokémon is a trademark of Nintendo, Game Freak, and Creatures Inc.; this project isn't affiliated with them.
+
+## License
+
+[GPL-3.0](LICENSE)
