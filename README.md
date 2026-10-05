@@ -2,7 +2,7 @@
 
 Render Pokémon Showdown sets, Pokepaste links, and team stat blocks as clean inline cards in Obsidian.
 
-![vgy.me](https://i.vgy.me/ePDwBA.png)
+![vgy.me](https://i.vgy.me/jbVlVX.png)
 
 ## Features
 
