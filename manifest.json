@@ -1,8 +1,8 @@
 {
-  "id": "obsidian-pokemon-statblock-embeds",
+  "id": "pokemon-statblock-embeds",
   "name": "Pokemon Stat Block Embeds",
   "version": "0.2.1-beta",
-  "minAppVersion": "0.2.1-beta",
+  "minAppVersion": "1.0.0",
   "description": "Render Pokemon Showdown sets, Pokepaste links, and team stat blocks into clean inline visual cards inside Obsidian notes.",
   "author": "mayemu",
   "isDesktopOnly": false
