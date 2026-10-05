@@ -1,8 +1,8 @@
-name: Add Raw Assets to New Release
+name: Auto Create Release with Raw Assets
 on:
   push:
     tags:
-      - 'v0.2.1'
+      - 'v*'
 
 jobs:
   upload:
@@ -11,10 +11,10 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Upload Root Files to Release
+      - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: 'v0.2.1'
+          tag_name: ${{ github.ref_name }}
           files: |
             main.js
             manifest.js
