@@ -6,7 +6,7 @@ Render Pokémon Showdown sets, Pokepaste links, and team stat blocks as clean in
 
 ## Features
 
-- Animated, pixel, or HD sprites, including shiny, female, and Mega forms
+- Animated, pixel, or HD sprites, including shiny, gendered, and Mega forms
 - Real final stats calculated from level, nature, IVs, and EVs
 - **Pokémon Champions support**: stat point spreads are auto-detected
 - Type-colored cards with tera types, item icons, and move details on hover
