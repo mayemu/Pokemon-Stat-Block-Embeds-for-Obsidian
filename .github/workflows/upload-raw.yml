@@ -1,8 +1,8 @@
-name: Add Raw Assets to Existing Release
+name: Add Raw Assets to New Release
 on:
   push:
     tags:
-      - 'v0.2.0-beta'
+      - 'v0.2.1'
 
 jobs:
   upload:
@@ -11,10 +11,10 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Upload Root Files to Existing Release
+      - name: Upload Root Files to Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: 'v0.2.0-beta'
+          tag_name: 'v0.2.1'
           files: |
             main.js
             manifest.js
