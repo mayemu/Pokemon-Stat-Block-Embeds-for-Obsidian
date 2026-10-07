@@ -1,7 +1,7 @@
 {
   "id": "pokemon-statblock-embeds",
   "name": "Pokemon Stat Block Embeds",
-  "version": "0.2.3-beta",
+  "version": "0.2.4-beta",
   "minAppVersion": "1.0.0",
   "description": "Render Pokemon Showdown sets, Pokepaste links, and team stat blocks into clean inline visual cards inside your notes.",
   "author": "mayemu",
